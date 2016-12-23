@@ -49,9 +49,11 @@ impl Subtitle {
         for line in buf.lines() {
             let line = line.unwrap();
 
+            println!("Line: {}", line);
             if line == "" {
                 prev_blank = true;
             } else if prev_blank == true {
+                println!("Line to be kuked: \n{}\n", entry_text.join("\n"));
                 self.entries.push(SubEntry::from(&entry_text.join("\n")).unwrap());
                 entry_text = vec!(line);
                 prev_blank = false;
@@ -61,6 +63,12 @@ impl Subtitle {
             }
         }
         self.entries.push(SubEntry::from(&entry_text.join("\n")).unwrap());
+    }
+
+    pub fn translate(self) {
+        for entry in self.entries.into_iter() {
+            println!("\nTranslate: {}", entry.text);
+        }
     }
 }
 
@@ -86,7 +94,8 @@ impl SubEntry {
         let start = Timestamp::from(stamps.next().unwrap()).unwrap();
         let stop = Timestamp::from(stamps.next().unwrap()).unwrap();
 
-        let text = lines.collect();
+        let text = lines.join("\n");
+        println!("text: {}", text);
 
         Ok(SubEntry{
             num: num,
