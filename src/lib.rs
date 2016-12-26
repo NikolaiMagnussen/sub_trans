@@ -9,13 +9,14 @@ use std::fs::File;
 use std::io::BufReader;
 use std::io::BufRead;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
+/// A subtitle comprise a string and a vector of entries.
 pub struct Subtitle {
     name: String,
     entries: Vec<SubEntry>
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct SubEntry {
     num: usize,
     start: Timestamp,
@@ -23,7 +24,7 @@ struct SubEntry {
     text: String
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 struct Timestamp {
     hour: u8,
     minute: u8,
@@ -32,6 +33,8 @@ struct Timestamp {
 }
 
 impl Subtitle {
+    /// Create a new, uninitialized subtitle.
+    /// If a non-existent subtitle path is provided, no error will be provided until when parsing.
     pub fn new(name: &str) -> Subtitle {
         Subtitle {
             name: String::from(name),
@@ -39,6 +42,7 @@ impl Subtitle {
         }
     }
 
+    /// Parse the subtitle, filling the subtitle struct with information that can be translated.
     pub fn parse(&mut self) {
         let f = File::open(&self.name).unwrap();
         let buf = BufReader::new(f);
@@ -67,14 +71,22 @@ impl Subtitle {
         self.entries.push(SubEntry::from(&entry_text.join("\n")).unwrap());
     }
 
-    pub fn translate(self) {
-        for entry in self.entries.into_iter() {
+    /// Translate the subtitle.
+    /// Returning a copy of the subtitle, but where the name is changed and the text is translated
+    pub fn translate(&self, trans_name: &str) -> Subtitle {
+        let mut translated: Subtitle = self.clone();
+        translated.name = String::from(trans_name);
+
+        for entry in self.entries.iter() {
             println!("\nTranslate: {}", entry.text);
         }
+        translated
     }
 }
 
 impl SubEntry {
+    /// Manually create a subentry
+    #[allow(unused)]
     fn new(num: usize, start: Timestamp, stop: Timestamp, text: &str) -> SubEntry {
         SubEntry {
             num: num,
@@ -84,6 +96,9 @@ impl SubEntry {
         }
     }
 
+    /// Parse an entry text into a SubEntry.
+    /// This is dangerous and is very error prone because of very lacking error handling.
+    /// TODO: Fix error handling
     fn from(entry_text: &str) -> Result<SubEntry, &'static str> {
         // Get the lines
         let mut lines = entry_text.trim().lines();
@@ -108,6 +123,8 @@ impl SubEntry {
 }
 
 impl Timestamp {
+    /// Manually create a timestamp
+    #[allow(unused)]
     fn new(h: u8, m: u8, s: u8, ms: u16) -> Timestamp {
         Timestamp {
             hour: h,
@@ -117,11 +134,14 @@ impl Timestamp {
         }
     }
 
-    fn from(timestamp_text: &str) -> Result<Timestamp, &'static str> {
+    /// Parse a string into a timestamp
+    fn from(timestamp_text: &str) -> Result<Timestamp, String> {
         let re = Regex::new(r"(\d{2}):(\d{2}):(\d{2}),(\d{3})");
         match re {
             Ok(re) => {
                 if let Some(matches) = re.captures(timestamp_text) {
+                    // These unwraps should be totally safe, because the combination of the Ok and
+                    // Some mean that all four integer fields were matched.
                     Ok(Timestamp{
                         hour: matches.at(1).unwrap().parse::<u8>().unwrap(),
                         minute: matches.at(2).unwrap().parse::<u8>().unwrap(),
@@ -129,10 +149,10 @@ impl Timestamp {
                         millisecond: matches.at(4).unwrap().parse::<u16>().unwrap()
                     })
                 } else {
-                    Err("Text could not be parsed as Timestamp")
+                    Err(String::from("Text could not be parsed as Timestamp"))
                 }
             }
-            Err(e) => Err("An error with the regex compiliation")
+            Err(e) => Err(format!("Regex error: {}", e.description()))
         }
     }
 }
