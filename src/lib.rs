@@ -82,11 +82,9 @@ impl Subtitle {
         for line in buf.lines() {
             let line = line.unwrap();
 
-            println!("Line: {}", line);
             if line == "" {
                 prev_blank = true;
             } else if prev_blank == true {
-                println!("Line to be kuked: \n{}\n", entry_text.join("\n"));
                 self.entries.push(SubEntry::from(&entry_text.join("\n")).unwrap());
                 entry_text = vec!(line);
                 prev_blank = false;
@@ -104,16 +102,13 @@ impl Subtitle {
         let mut translated: Subtitle = self.clone();
         translated.name = String::from(trans_name);
 
+        println!("Number of entries to translate: {}", self.entries.len());
         for (orig, trans)  in self.entries.iter().zip(translated.entries.iter_mut()) {
-            println!("\nTranslate: {}\n", orig.text);
-            println!("\nInto: {}\n", trans.text);
+            println!("\n{}", orig.text);
             let mut buffer = String::new();
             if let Ok(_) = io::stdin().read_to_string(&mut buffer) {
                 let buffer = buffer;
                 trans.text = buffer;
-                println!("Yey");
-            } else {
-                println!("WTF");
             }
         }
 
@@ -125,7 +120,7 @@ impl Subtitle {
     pub fn write(&self) {
         let file = OpenOptions::new().write(true).create(true).open(&self.name);
         match file {
-            Ok(mut file) => { write!(file, "{}", self); },
+            Ok(mut file) => { let _ = write!(file, "{}", self); },
             Err(e) => println!("Error opening/creating file: {}", e)
         }
     }
