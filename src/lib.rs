@@ -1,6 +1,8 @@
 extern crate regex;
+extern crate itertools;
 
 use regex::Regex;
+use itertools::Itertools;
 
 use std::error::Error;
 use std::fs::File;
@@ -95,7 +97,6 @@ impl SubEntry {
         let stop = Timestamp::from(stamps.next().unwrap()).unwrap();
 
         let text = lines.join("\n");
-        println!("text: {}", text);
 
         Ok(SubEntry{
             num: num,

@@ -5,3 +5,8 @@ authors = ["Nikolai Magnussen <nikolai@magnussen.tf>"]
 
 [dependencies]
 regex="0.1"
+itertools = "0.5"
+
+[[bin]]
+doc = false
+name = "main"
