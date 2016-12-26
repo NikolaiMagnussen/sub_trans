@@ -5,9 +5,12 @@ use regex::Regex;
 use itertools::Itertools;
 
 use std::error::Error;
+use std::fmt;
+use std::fs::OpenOptions;
 use std::fs::File;
 use std::io::BufReader;
 use std::io::BufRead;
+use std::io::{self, Read, Write};
 
 #[derive(Debug, Clone)]
 /// A subtitle comprise a string and a vector of entries.
@@ -31,6 +34,30 @@ struct Timestamp {
     second: u8,
     millisecond: u16
 }
+
+impl fmt::Display for Subtitle {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut entries_text = String::new();
+        for entry in self.entries.iter() {
+            entries_text.push_str(&entry.to_string());
+            entries_text.push_str("\n");
+        }
+        write!(f, "{}", entries_text)
+    }
+}
+
+impl fmt::Display for SubEntry {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}\n{} --> {}\n{}", self.num, self.start, self.stop, self.text)
+    }
+}
+
+impl fmt::Display for Timestamp {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:02}:{:02}:{:02},{:03}", self.hour, self.minute, self.second, self.millisecond)
+    }
+}
+
 
 impl Subtitle {
     /// Create a new, uninitialized subtitle.
@@ -77,10 +104,30 @@ impl Subtitle {
         let mut translated: Subtitle = self.clone();
         translated.name = String::from(trans_name);
 
-        for entry in self.entries.iter() {
-            println!("\nTranslate: {}", entry.text);
+        for (orig, trans)  in self.entries.iter().zip(translated.entries.iter_mut()) {
+            println!("\nTranslate: {}\n", orig.text);
+            println!("\nInto: {}\n", trans.text);
+            let mut buffer = String::new();
+            if let Ok(_) = io::stdin().read_to_string(&mut buffer) {
+                let buffer = buffer;
+                trans.text = buffer;
+                println!("Yey");
+            } else {
+                println!("WTF");
+            }
         }
+
         translated
+    }
+
+    /// Write the subtitle to disk.
+    /// Will either fail and print an error, or write the translated subtitle to disk.
+    pub fn write(&self) {
+        let file = OpenOptions::new().write(true).create(true).open(&self.name);
+        match file {
+            Ok(mut file) => { write!(file, "{}", self); },
+            Err(e) => println!("Error opening/creating file: {}", e)
+        }
     }
 }
 

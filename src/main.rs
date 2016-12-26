@@ -7,5 +7,6 @@ use std::env;
 fn main() {
     let mut a = Subtitle::new(&env::args().nth(1).unwrap());
     a.parse();
-    a.translate();
+    let b = a.translate("kake");
+    b.write();
 }
